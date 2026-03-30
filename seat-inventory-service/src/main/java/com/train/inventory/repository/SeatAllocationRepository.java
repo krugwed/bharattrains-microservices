@@ -15,4 +15,13 @@ public interface SeatAllocationRepository extends JpaRepository<SeatAllocation, 
             Long trainId,
             LocalDate journeyDate
     );
+
+    long countByTrainIdAndJourneyDateAndStatus(Long trainId, LocalDate date, String status);
+
+    List<SeatAllocation> findByTrainIdAndJourneyDateAndStatusOrderByAllocationIdAsc(
+            Long trainId, LocalDate date, String status
+    );
+
+    List<SeatAllocation> findByBookingId(Long bookingId);
+
 }
