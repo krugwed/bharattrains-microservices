@@ -17,5 +17,7 @@ public class WaitingList {
 
     private Integer priorityNumber;
 
+    private Long passengerId;
+
     private String status; // WL / MOVED_TO_RAC / CONFIRMED
 }

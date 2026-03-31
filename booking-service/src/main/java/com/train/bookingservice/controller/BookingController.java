@@ -27,4 +27,14 @@ public class BookingController {
         return bookingService.getBookingByPNR(pnr);
     }
 
+    @DeleteMapping("/cancel/{pnr}")
+    public String cancelBooking(@PathVariable String pnr) {
+        return bookingService.cancelBooking(pnr);
+    }
+
+    @DeleteMapping("/passenger/{passengerId}")
+    public String cancelPassenger(@PathVariable Long passengerId) {
+        return bookingService.cancelPassenger(passengerId);
+    }
+
 }

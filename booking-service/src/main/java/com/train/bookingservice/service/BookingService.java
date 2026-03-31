@@ -10,7 +10,11 @@ import com.train.bookingservice.entity.Passenger;
 import com.train.bookingservice.repository.BookingRepository;
 import com.train.bookingservice.repository.PassengerRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -46,25 +50,24 @@ public class BookingService {
 
         for (PassengerDTO p : request.getPassengers()) {
 
-            String status = seatClient.bookSeat(
-                    request.getTrainId(),
-                    request.getJourneyDate(),
-                    request.getFromStation(),
-                    request.getToStation(),
-                    booking.getBookingId()
-            );
-
             Passenger passenger = new Passenger();
             passenger.setBookingId(booking.getBookingId());
             passenger.setName(p.getName());
             passenger.setAge(p.getAge());
             passenger.setGender(p.getGender());
+
+            passengerRepository.save(passenger); // ✅ FIRST SAVE
+
+            String status = seatClient.bookSeat(
+                    request.getTrainId(),
+                    request.getJourneyDate(),
+                    request.getFromStation(),
+                    request.getToStation(),
+                    booking.getBookingId(),
+                    passenger.getPassengerId()   // ✅ pass this
+            );
+
             passenger.setStatus(status);
-
-            if (!status.equals("CONFIRMED")) {
-                allConfirmed = false;
-            }
-
             passengerRepository.save(passenger);
         }
 
@@ -114,4 +117,97 @@ public class BookingService {
                 passengerDetailsList
         );
     }
+
+    @Transactional
+    public String cancelBooking(String pnr) {
+
+        // Find booking
+        Booking booking = bookingRepository.findByPnr(pnr);
+
+        if (booking == null) {
+            throw new RuntimeException("PNR not found");
+        }
+
+        if ("CANCELLED".equals(booking.getStatus())) {
+            return "Booking already cancelled";
+        }
+
+        // Call seat service
+        seatClient.cancelBooking(
+                booking.getBookingId(),
+                booking.getTrainId(),
+                booking.getJourneyDate()
+        );
+
+        //Update passengers
+        List<Passenger> passengers =
+                passengerRepository.findByBookingId(booking.getBookingId());
+
+        for (Passenger p : passengers) {
+            p.setStatus("CANCELLED");
+            passengerRepository.save(p);
+        }
+
+        //Update booking
+        booking.setStatus("CANCELLED");
+        bookingRepository.save(booking);
+
+        return "Booking cancelled successfully";
+    }
+
+    @Transactional
+    public String cancelPassenger(Long passengerId) {
+
+        Passenger passenger =
+                passengerRepository.findById(passengerId)
+                        .orElseThrow(() -> new RuntimeException("Passenger not found"));
+
+        if ("CANCELLED".equals(passenger.getStatus())) {
+            return "Passenger already cancelled";
+        }
+
+        //Call seat service
+        Booking booking = bookingRepository.findById(passenger.getBookingId())
+                .orElseThrow(() -> new RuntimeException("Booking not found"));
+
+        seatClient.cancelPassenger(
+                passengerId,
+                booking.getTrainId(),
+                booking.getJourneyDate()
+        );
+
+        // Update passenger
+        passenger.setStatus("CANCELLED");
+        passengerRepository.save(passenger);
+
+        // Recalculate booking status
+        updateBookingStatus(booking.getBookingId());
+
+        return "Passenger cancelled successfully";
+    }
+
+    private void updateBookingStatus(Long bookingId) {
+
+        List<Passenger> passengers =
+                passengerRepository.findByBookingId(bookingId);
+
+        boolean allCancelled = passengers.stream()
+                .allMatch(p -> p.getStatus().equals("CANCELLED"));
+
+        boolean allConfirmed = passengers.stream()
+                .allMatch(p -> p.getStatus().equals("CONFIRMED"));
+
+        Booking booking = bookingRepository.findById(bookingId).get();
+
+        if (allCancelled) {
+            booking.setStatus("CANCELLED");
+        } else if (allConfirmed) {
+            booking.setStatus("CONFIRMED");
+        } else {
+            booking.setStatus("PARTIAL");
+        }
+
+        bookingRepository.save(booking);
+    }
+
 }

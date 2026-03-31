@@ -95,29 +95,30 @@ public class SeatAllocationService {
                            LocalDate date,
                            int from,
                            int to,
-                           Long bookingId) {
+                           Long bookingId,
+                           Long passengerId) {
 
         // 1. Try confirmed seat
-        SeatAllocation allocation = tryAllocateConfirmed(trainId, date, from, to, bookingId);
+        SeatAllocation allocation = tryAllocateConfirmed(trainId, date, from, to, bookingId, passengerId);
 
         if (allocation != null) {
             return "CONFIRMED";
         }
 
         // 2. Try RAC
-        boolean racAllocated = allocateRAC(trainId, date, bookingId);
+        boolean racAllocated = allocateRAC(trainId, date, bookingId, passengerId);
 
         if (racAllocated) {
             return "RAC";
         }
 
         // 3. Add to WL
-        addToWaitingList(trainId, bookingId);
+        addToWaitingList(trainId, bookingId, passengerId);
 
         return "WAITING_LIST";
     }
 
-    private boolean allocateRAC(Long trainId, LocalDate date, Long bookingId) {
+    private boolean allocateRAC(Long trainId, LocalDate date, Long bookingId, Long passengerId) {
 
         long racCount = countRAC(trainId, date);
 
@@ -129,6 +130,7 @@ public class SeatAllocationService {
             sa.setTrainId(trainId);
             sa.setJourneyDate(date);
             sa.setBookingId(bookingId);
+            sa.setPassengerId(passengerId);
             sa.setStatus("RAC");
 
             seatAllocationRepository.save(sa);
@@ -139,7 +141,7 @@ public class SeatAllocationService {
         return false;
     }
 
-    private void addToWaitingList(Long trainId, Long bookingId) {
+    private void addToWaitingList(Long trainId, Long bookingId, Long passengerId) {
 
         long count = waitingListRepository.countByTrainId(trainId);
 
@@ -147,6 +149,7 @@ public class SeatAllocationService {
         wl.setTrainId(trainId);
         wl.setBookingId(bookingId);
         wl.setPriorityNumber((int) count + 1);
+        wl.setPassengerId(passengerId);
         wl.setStatus("WL");
 
         waitingListRepository.save(wl);
@@ -156,7 +159,8 @@ public class SeatAllocationService {
                                                 LocalDate journeyDate,
                                                 int fromStationOrder,
                                                 int toStationOrder,
-                                                Long bookingId) {
+                                                Long bookingId,
+                                                Long passengerId) {
 
         List<Seat> seats = seatRepository.findAll();
 
@@ -181,6 +185,7 @@ public class SeatAllocationService {
                 allocation.setFromStationOrder(fromStationOrder);
                 allocation.setToStationOrder(toStationOrder);
                 allocation.setBookingId(bookingId);
+                allocation.setPassengerId(passengerId);
                 allocation.setStatus("CONFIRMED");
 
                 return seatAllocationRepository.save(allocation);
@@ -240,7 +245,7 @@ public class SeatAllocationService {
             wl.setStatus("MOVED_TO_RAC");
             waitingListRepository.save(wl);
 
-            allocateRAC(trainId, date, wl.getBookingId());
+            allocateRAC(trainId, date, wl.getBookingId(), wl.getPassengerId());
         }
     }
 
@@ -261,6 +266,26 @@ public class SeatAllocationService {
         }
 
         // 3. Trigger promotion
+        promotePassengers(trainId, date);
+    }
+
+    public void cancelPassenger(Long passengerId,
+                                Long trainId,
+                                LocalDate date) {
+
+        List<SeatAllocation> allocations =
+                seatAllocationRepository.findByPassengerId(passengerId);
+
+        if (allocations.isEmpty()) {
+            throw new RuntimeException("Passenger allocation not found");
+        }
+
+        for (SeatAllocation allocation : allocations) {
+            allocation.setStatus("CANCELLED");
+            seatAllocationRepository.save(allocation);
+        }
+
+        // Trigger promotion
         promotePassengers(trainId, date);
     }
 

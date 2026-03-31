@@ -31,5 +31,7 @@ public class SeatAllocation {
 
     private Long bookingId;
 
+    private Long passengerId;
+
     private String status; // BOOKED / RAC / CANCELLED
 }

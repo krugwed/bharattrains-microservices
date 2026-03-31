@@ -24,4 +24,6 @@ public interface SeatAllocationRepository extends JpaRepository<SeatAllocation, 
 
     List<SeatAllocation> findByBookingId(Long bookingId);
 
+    List<SeatAllocation> findByPassengerId(Long passengerId);
+
 }
