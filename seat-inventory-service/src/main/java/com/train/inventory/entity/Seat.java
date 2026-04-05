@@ -17,6 +17,4 @@ public class Seat {
 
     @Column(nullable = false)
     private String seatNumber;
-
-    private String seatType;   // LOWER, MIDDLE, UPPER, SIDE_LOWER etc
 }

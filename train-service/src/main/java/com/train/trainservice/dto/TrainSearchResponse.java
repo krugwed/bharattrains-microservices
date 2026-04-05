@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
+import java.util.Map;
 
 @Data
 @AllArgsConstructor
@@ -12,17 +13,19 @@ import java.time.LocalDate;
 public class TrainSearchResponse {
 
     private Long trainId;
+
     private String trainName;
 
     private String source;
+
     private String destination;
 
     private int fromOrder;
+
     private int toOrder;
 
     private LocalDate journeyDate;
 
-    // future fields
     private Integer availableSeats;
 
     private String arrivalTime;
@@ -30,4 +33,6 @@ public class TrainSearchResponse {
     private String departureTime;
 
     private Long durationHours;
+
+    private Map<String, Double> fares;
 }

@@ -1,9 +1,8 @@
 package com.train.inventory.service;
 
-import com.train.inventory.entity.AvailabilityRequest;
-import com.train.inventory.entity.Seat;
-import com.train.inventory.entity.SeatAllocation;
-import com.train.inventory.entity.WaitingList;
+import com.train.inventory.dto.SeatDetails;
+import com.train.inventory.entity.*;
+import com.train.inventory.repository.CoachRepository;
 import com.train.inventory.repository.SeatAllocationRepository;
 import com.train.inventory.repository.SeatRepository;
 import com.train.inventory.repository.WaitingListRepository;
@@ -20,15 +19,18 @@ public class SeatAllocationService {
     private final SeatRepository seatRepository;
     private final SeatAllocationRepository seatAllocationRepository;
     private final WaitingListRepository waitingListRepository;
+    private final CoachRepository coachRepository;
 
     public SeatAllocationService(
             SeatRepository seatRepository,
             SeatAllocationRepository seatAllocationRepository,
-            WaitingListRepository waitingListRepository) {
-
+            WaitingListRepository waitingListRepository,
+            CoachRepository coachRepository
+    ) {
         this.seatRepository = seatRepository;
         this.seatAllocationRepository = seatAllocationRepository;
         this.waitingListRepository = waitingListRepository;
+        this.coachRepository = coachRepository;
     }
 
     private boolean isSeatAvailable(List<SeatAllocation> allocations,
@@ -56,7 +58,11 @@ public class SeatAllocationService {
                                      int fromStationOrder,
                                      int toStationOrder) {
 
-        List<Seat> seats = seatRepository.findAll();
+        List<Coach> coaches = coachRepository.findByTrainId(trainId);
+
+        List<Seat> seats = coaches.stream()
+                .flatMap(coach -> seatRepository.findByCoachId(coach.getCoachId()).stream())
+                .toList();
         int availableSeats = 0;
 
         for (Seat seat : seats) {
@@ -165,7 +171,11 @@ public class SeatAllocationService {
                                                 Long bookingId,
                                                 Long passengerId) {
 
-        List<Seat> seats = seatRepository.findAll();
+        List<Coach> coaches = coachRepository.findByTrainId(trainId);
+
+        List<Seat> seats = coaches.stream()
+                .flatMap(coach -> seatRepository.findByCoachId(coach.getCoachId()).stream())
+                .toList();
 
         for (Seat seat : seats) {
 
@@ -210,7 +220,11 @@ public class SeatAllocationService {
 
             SeatAllocation racPassenger = racList.get(0);
 
-            List<Seat> seats = seatRepository.findAll();
+            List<Coach> coaches = coachRepository.findByTrainId(trainId);
+
+            List<Seat> seats = coaches.stream()
+                    .flatMap(coach -> seatRepository.findByCoachId(coach.getCoachId()).stream())
+                    .toList();
 
             for (Seat seat : seats) {
 
@@ -310,6 +324,26 @@ public class SeatAllocationService {
         }
 
         return result;
+    }
+
+    public List<SeatDetails> getSeatDetailsByBooking(Long bookingId) {
+
+        List<SeatAllocation> allocations =
+                seatAllocationRepository.findByBookingId(bookingId);
+
+        return allocations.stream().map(a -> {
+
+            Seat seat = seatRepository.findById(a.getSeatId()).orElse(null);
+            Coach coach = coachRepository.findById(seat.getCoachId()).orElse(null);
+
+            SeatDetails dto = new SeatDetails();
+            dto.setPassengerId(a.getPassengerId());
+            dto.setSeatNumber(seat.getSeatNumber());
+            dto.setCoachNumber(coach.getCoachNumber());
+
+            return dto;
+
+        }).toList();
     }
 
 

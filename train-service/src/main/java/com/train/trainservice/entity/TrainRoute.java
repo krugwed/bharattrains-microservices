@@ -22,4 +22,5 @@ public class TrainRoute {
 
     private LocalTime arrivalTime;
     private LocalTime departureTime;
+    private Long distanceFromSource;
 }

@@ -1,9 +1,11 @@
 package com.train.inventory.controller;
 
+import com.train.inventory.entity.AvailabilityRequest;
 import com.train.inventory.service.SeatAllocationService;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Map;
 
 @RestController

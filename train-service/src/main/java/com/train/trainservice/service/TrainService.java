@@ -36,6 +36,9 @@ public class TrainService {
     @Autowired
     SeatInventoryClient seatInventoryClient;
 
+    @Autowired
+    FareService fareService;
+
     public Train createTrain(String name) {
 
         Train train = new Train();
@@ -67,7 +70,7 @@ public class TrainService {
             route.setArrivalTime(LocalTime.parse(arrival));
         }
         if(departure != null){
-            route.setArrivalTime(LocalTime.parse(departure));
+            route.setDepartureTime(LocalTime.parse(departure));
         }
         trainRouteRepository.save(route);
     }
@@ -161,17 +164,27 @@ public class TrainService {
             int fromOrder = route[0];
             int toOrder = route[1];
 
-            LocalTime departureTime = trainRouteRepository
-                    .findByTrainIdAndStationId(train.getTrainId(), source.getStationId())
-                    .getDepartureTime();
+            TrainRoute fromRoute = trainRouteRepository
+                    .findByTrainIdAndStationId(train.getTrainId(), source.getStationId());
 
-            LocalTime arrivalTime = trainRouteRepository
-                    .findByTrainIdAndStationId(train.getTrainId(), dest.getStationId())
-                    .getArrivalTime();
+            TrainRoute toRoute = trainRouteRepository
+                    .findByTrainIdAndStationId(train.getTrainId(), dest.getStationId());
+
+            LocalTime departureTime = fromRoute.getDepartureTime();
+            LocalTime arrivalTime = toRoute.getArrivalTime();
 
             long durationHours = Duration.between(departureTime, arrivalTime).toHours();
 
             int availableSeats = availabilityMap.getOrDefault(train.getTrainId(), 0);
+
+            int distance = Math.toIntExact(toRoute.getDistanceFromSource() - fromRoute.getDistanceFromSource());
+
+            Map<String, Double> fares = new HashMap<>();
+            fares.put("GENERAL", fareService.calculateFare(distance, "GENERAL"));
+            fares.put("SLEEPER", fareService.calculateFare(distance, "SLEEPER"));
+            fares.put("AC3", fareService.calculateFare(distance, "AC3"));
+            fares.put("AC2", fareService.calculateFare(distance, "AC2"));
+            fares.put("AC1", fareService.calculateFare(distance, "AC1"));
 
             return new TrainSearchResponse(
                     train.getTrainId(),
@@ -184,7 +197,8 @@ public class TrainService {
                     availableSeats,
                     arrivalTime.toString(),
                     departureTime.toString(),
-                    durationHours
+                    durationHours,
+                    fares
             );
 
         }).toList();

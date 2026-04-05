@@ -2,11 +2,9 @@ package com.train.bookingservice.service;
 
 import com.train.bookingservice.client.NotificationClient;
 import com.train.bookingservice.client.SeatInventoryClient;
+import com.train.bookingservice.client.TrainClient;
 import com.train.bookingservice.client.UserClient;
-import com.train.bookingservice.dto.BookingDetailsResponse;
-import com.train.bookingservice.dto.BookingRequestDTO;
-import com.train.bookingservice.dto.PassengerDTO;
-import com.train.bookingservice.dto.PassengerDetails;
+import com.train.bookingservice.dto.*;
 import com.train.bookingservice.entity.Booking;
 import com.train.bookingservice.entity.Passenger;
 import com.train.bookingservice.repository.BookingRepository;
@@ -25,19 +23,21 @@ public class BookingService {
     private final SeatInventoryClient seatClient;
     private final NotificationClient notificationClient;
     private final UserClient userClient;
+    private final TrainClient trainClient;
 
     public BookingService(
             BookingRepository bookingRepository,
             PassengerRepository passengerRepository,
             SeatInventoryClient seatClient,
             NotificationClient notificationClient,
-            UserClient userClient
-    ) {
+            UserClient userClient,
+            TrainClient trainClient) {
         this.bookingRepository = bookingRepository;
         this.passengerRepository = passengerRepository;
         this.seatClient = seatClient;
         this.notificationClient = notificationClient;
         this.userClient = userClient;
+        this.trainClient = trainClient;
     }
 
     public Booking createBooking(BookingRequestDTO request) {
@@ -45,6 +45,13 @@ public class BookingService {
         // Fetch email from User Service
         String email = userClient.getUserEmail(request.getUserId());
 
+        Double farePerPassenger = trainClient.getFare(
+                request.getTrainId(),
+                String.valueOf(request.getFromStation()),
+                String.valueOf(request.getToStation()),
+                request.getCoachType(),
+                request.getJourneyDate().toString()
+        );
         // Create booking
         Booking booking = new Booking();
         booking.setTrainId(request.getTrainId());
@@ -57,6 +64,7 @@ public class BookingService {
         bookingRepository.save(booking);
 
         boolean allConfirmed = true;
+        double totalFare = 0;
 
         for (PassengerDTO p : request.getPassengers()) {
 
@@ -65,6 +73,7 @@ public class BookingService {
             passenger.setName(p.getName());
             passenger.setAge(p.getAge());
             passenger.setGender(p.getGender());
+            passenger.setFare(farePerPassenger);
 
             passengerRepository.save(passenger);
 
@@ -82,9 +91,12 @@ public class BookingService {
             if (!"CONFIRMED".equals(status)) {
                 allConfirmed = false;
             }
-
             passengerRepository.save(passenger);
+
+            totalFare += farePerPassenger;
+
         }
+        booking.setTotalFare(totalFare);
 
         // Update booking status
         booking.setStatus(allConfirmed ? "CONFIRMED" : "PARTIAL");
@@ -93,7 +105,8 @@ public class BookingService {
         // 🔔 SEND NOTIFICATION
         notificationClient.sendNotification(
                 booking.getBookingId(),
-                "Booking created successfully. PNR: " + booking.getPnr(),
+                "Booking created successfully. PNR: " + booking.getPnr()
+                        + " | Total Fare: " + totalFare,
                 email,
                 "BOOKING_CREATED"
         );
@@ -115,16 +128,32 @@ public class BookingService {
 
         List<Passenger> passengers =
                 passengerRepository.findByBookingId(booking.getBookingId());
+        List<SeatDetails> seatDetails =
+                seatClient.getSeatDetails(booking.getBookingId());
 
         List<PassengerDetails> passengerDetailsList =
-                passengers.stream()
-                        .map(p -> new PassengerDetails(
-                                p.getName(),
-                                p.getAge(),
-                                p.getGender(),
-                                p.getStatus()
-                        ))
-                        .toList();
+                passengers.stream().map(p -> {
+
+                    SeatDetails seat = seatDetails.stream()
+                            .filter(s -> s.getPassengerId().equals(p.getPassengerId()))
+                            .findFirst()
+                            .orElse(null);
+
+                    String seatValue = null;
+
+                    if (seat != null && seat.getCoachNumber() != null) {
+                        seatValue = seat.getCoachNumber() + "-" + seat.getSeatNumber();
+                    }
+
+                    return new PassengerDetails(
+                            p.getName(),
+                            p.getAge(),
+                            p.getGender(),
+                            p.getStatus(),
+                            seatValue
+                    );
+
+                }).toList();
 
         return new BookingDetailsResponse(
                 booking.getPnr(),
@@ -133,6 +162,7 @@ public class BookingService {
                 booking.getFromStation(),
                 booking.getToStation(),
                 booking.getStatus(),
+                booking.getTotalFare(),
                 passengerDetailsList
         );
     }

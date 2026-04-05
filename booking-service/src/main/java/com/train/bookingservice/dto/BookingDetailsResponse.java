@@ -24,5 +24,7 @@ public class BookingDetailsResponse {
 
     private String bookingStatus;
 
+    private Double totalFare;
+
     private List<PassengerDetails> passengers;
 }

@@ -13,4 +13,5 @@ public class PassengerDetails {
     private int age;
     private String gender;
     private String status;
+    private String seat;
 }

@@ -21,4 +21,6 @@ public class Passenger {
     private String gender;
 
     private String status; // CONFIRMED / RAC / WL
+
+    private Double fare;
 }

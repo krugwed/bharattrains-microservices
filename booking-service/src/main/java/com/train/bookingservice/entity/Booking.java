@@ -25,4 +25,6 @@ public class Booking {
     private int toStation;
 
     private String status;
+
+    private Double totalFare;
 }

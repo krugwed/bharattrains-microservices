@@ -1,9 +1,14 @@
 package com.train.bookingservice.client;
 
+import com.train.bookingservice.dto.SeatDetails;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Component
 public class SeatInventoryClient {
@@ -66,5 +71,18 @@ public class SeatInventoryClient {
                 null,
                 String.class
         );
+    }
+
+    public List<SeatDetails> getSeatDetails(Long bookingId) {
+
+        ResponseEntity<List<SeatDetails>> response =
+                restTemplate.exchange(
+                        "http://seat-inventory-service/seats/" + bookingId,
+                        HttpMethod.GET,
+                        null,
+                        new ParameterizedTypeReference<List<SeatDetails>>() {}
+                );
+
+        return response.getBody();
     }
 }

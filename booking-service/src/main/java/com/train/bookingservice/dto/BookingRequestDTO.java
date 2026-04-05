@@ -19,4 +19,6 @@ public class BookingRequestDTO {
     private int toStation;
 
     private List<PassengerDTO> passengers;
+
+    private String coachType; // SLEEPER / AC3 / AC2 etc
 }
