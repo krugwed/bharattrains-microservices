@@ -60,6 +60,7 @@ public class BookingService {
         booking.setToStation(request.getToStation());
         booking.setPnr(generatePNR());
         booking.setStatus("CREATED");
+        booking.setPaymentStatus("PENDING");
 
         bookingRepository.save(booking);
 
@@ -102,7 +103,7 @@ public class BookingService {
         booking.setStatus(allConfirmed ? "CONFIRMED" : "PARTIAL");
         bookingRepository.save(booking);
 
-        // 🔔 SEND NOTIFICATION
+        // SEND NOTIFICATION
         notificationClient.sendNotification(
                 booking.getBookingId(),
                 "Booking created successfully. PNR: " + booking.getPnr()

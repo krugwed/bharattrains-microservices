@@ -26,5 +26,7 @@ public class Booking {
 
     private String status;
 
+    private String paymentStatus;
+
     private Double totalFare;
 }
