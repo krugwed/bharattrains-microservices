@@ -1,5 +1,6 @@
 package com.train.trainservice.entity;
 
+import com.train.trainservice.converter.DayOfWeekSetConverter;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -17,5 +18,7 @@ public class Train {
 
     private String trainName;
 
+    @Convert(converter = DayOfWeekSetConverter.class)
     private Set<DayOfWeek> runningDays;
+
 }

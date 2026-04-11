@@ -1,6 +1,7 @@
 package com.train.inventory.service;
 
 import com.train.inventory.dto.SeatDetails;
+import com.train.inventory.dto.SeatSetupRequest;
 import com.train.inventory.entity.*;
 import com.train.inventory.repository.CoachRepository;
 import com.train.inventory.repository.SeatAllocationRepository;
@@ -346,5 +347,39 @@ public class SeatAllocationService {
         }).toList();
     }
 
+    public void createSeatsForTrain(SeatSetupRequest request) {
 
+        Long trainId = request.getTrainId();
+
+        // Sleeper
+        createCoaches(trainId, "S", request.getSleeperCoaches(), request.getSeatsPerCoach());
+
+        // AC3
+        createCoaches(trainId, "B", request.getAc3Coaches(), request.getSeatsPerCoach());
+
+        // AC2
+        createCoaches(trainId, "A", request.getAc2Coaches(), request.getSeatsPerCoach());
+    }
+
+    private void createCoaches(Long trainId, String prefix,
+                               int coachCount, int seatsPerCoach) {
+
+        for (int i = 1; i <= coachCount; i++) {
+
+            Coach coach = new Coach();
+            coach.setTrainId(trainId);
+            coach.setCoachNumber(prefix + i);
+
+            coachRepository.save(coach);
+
+            for (int j = 1; j <= seatsPerCoach; j++) {
+
+                Seat seat = new Seat();
+                seat.setCoachId(coach.getCoachId());
+                seat.setSeatNumber(String.valueOf(j));
+
+                seatRepository.save(seat);
+            }
+        }
+    }
 }
