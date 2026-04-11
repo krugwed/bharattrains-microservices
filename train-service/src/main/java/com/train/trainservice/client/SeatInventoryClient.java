@@ -1,6 +1,7 @@
 package com.train.trainservice.client;
 
 import com.train.trainservice.dto.AvailabilityRequest;
+import com.train.trainservice.dto.SeatSetupRequest;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
@@ -34,5 +35,13 @@ public class SeatInventoryClient {
                 );
 
         return response.getBody();
+    }
+
+    public void createSeats(SeatSetupRequest request) {
+        restTemplate.postForObject(
+                "http://localhost:8082/seats/setup",
+                request,
+                String.class
+        );
     }
 }

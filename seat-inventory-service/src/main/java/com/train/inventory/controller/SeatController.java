@@ -1,5 +1,6 @@
 package com.train.inventory.controller;
 
+import com.train.inventory.dto.*;
 import com.train.inventory.entity.AvailabilityRequest;
 import com.train.inventory.service.SeatAllocationService;
 import org.springframework.web.bind.annotation.*;
@@ -19,34 +20,26 @@ public class SeatController {
     }
 
     @PostMapping("/book")
-    public String bookSeat(@RequestParam Long trainId,
-                                       @RequestParam String journeyDate,
-                                       @RequestParam int fromStation,
-                                       @RequestParam int toStation,
-                                       @RequestParam Long bookingId,
-                                        @RequestParam Long passengerId) {
+    public String bookSeat(@RequestBody SeatBookingRequest request) {
 
-        return seatAllocationService.bookSeat(trainId,
-                LocalDate.parse(journeyDate),
-                fromStation,
-                toStation,
-                bookingId,
-                passengerId
+        return seatAllocationService.bookSeat(
+                request.getTrainId(),
+                request.getJourneyDate(),
+                request.getFromStation(),
+                request.getToStation(),
+                request.getBookingId(),
+                request.getPassengerId()
         );
     }
 
-    @GetMapping("/availability")
-    public int checkAvailability(
-            @RequestParam Long trainId,
-            @RequestParam String journeyDate,
-            @RequestParam int fromStation,
-            @RequestParam int toStation) {
+    @PostMapping("/availability")
+    public int checkAvailability(@RequestBody AvailabilityCheckRequest request) {
 
         return seatAllocationService.checkSeatAvailability(
-                trainId,
-                LocalDate.parse(journeyDate),
-                fromStation,
-                toStation
+                request.getTrainId(),
+                LocalDate.parse(request.getJourneyDate()),
+                request.getFromStation(),
+                request.getToStation()
         );
     }
 
@@ -58,33 +51,33 @@ public class SeatController {
     }
 
     @PostMapping("/cancel")
-    public String cancelBooking(
-            @RequestParam Long bookingId,
-            @RequestParam Long trainId,
-            @RequestParam String date) {
+    public String cancelBooking(@RequestBody CancelBookingRequest request) {
 
         seatAllocationService.cancelBooking(
-                bookingId,
-                trainId,
-                LocalDate.parse(date)
+                request.getBookingId(),
+                request.getTrainId(),
+                request.getDate()
         );
 
         return "Booking cancelled and promotion processed";
     }
 
     @PostMapping("/cancel/passenger")
-    public String cancelPassenger(
-            @RequestParam Long passengerId,
-            @RequestParam Long trainId,
-            @RequestParam String date) {
+    public String cancelPassenger(@RequestBody CancelPassengerRequest request) {
 
         seatAllocationService.cancelPassenger(
-                passengerId,
-                trainId,
-                LocalDate.parse(date)
+                request.getPassengerId(),
+                request.getTrainId(),
+                request.getDate()
         );
 
         return "Passenger seat cancelled";
+    }
+
+    @PostMapping("/setup")
+    public String setupSeats(@RequestBody SeatSetupRequest request) {
+        seatAllocationService.createSeatsForTrain(request);
+        return "Seats created";
     }
 
 }

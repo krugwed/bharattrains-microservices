@@ -22,7 +22,7 @@ public class JwtFilter implements GlobalFilter {
         String path = exchange.getRequest().getURI().getPath();
 
         // Allow public endpoints
-        if (path.contains("/api/users") || path.contains("/api/auth")) {
+        if (path.contains("/users") || path.contains("/auth")) {
             return chain.filter(exchange);
         }
 
