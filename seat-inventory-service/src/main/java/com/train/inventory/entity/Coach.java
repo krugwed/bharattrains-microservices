@@ -9,7 +9,8 @@ import lombok.Data;
 public class Coach {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "coach_seq_gen")
+    @SequenceGenerator(name = "coach_seq_gen", sequenceName = "coach_seq", allocationSize = 1)
     private Long coachId;
 
     private Long trainId;

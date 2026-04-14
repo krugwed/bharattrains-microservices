@@ -9,7 +9,8 @@ import lombok.Data;
 public class Station {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "station_seq_gen")
+    @SequenceGenerator(name = "station_seq_gen", sequenceName = "station_seq", allocationSize = 1)
     private Long stationId;
 
     private String name;

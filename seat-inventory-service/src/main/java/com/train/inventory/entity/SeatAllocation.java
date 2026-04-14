@@ -11,7 +11,8 @@ import java.time.LocalDate;
 public class SeatAllocation {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "seat_allocation_seq_gen")
+    @SequenceGenerator(name = "seat_allocation_seq_gen", sequenceName = "seat_allocation_seq", allocationSize = 1)
     private Long allocationId;
 
     @Column(nullable = false)

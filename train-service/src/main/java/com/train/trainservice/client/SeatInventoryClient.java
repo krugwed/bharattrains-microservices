@@ -24,7 +24,7 @@ public class SeatInventoryClient {
     public Map<Long, Integer> getBulkAvailability(
             List<AvailabilityRequest> requests) {
 
-        String url = "http://localhost:8080/seats/availability/bulk";
+        String url = "http://localhost:8084/seats/availability/bulk";
 
         ResponseEntity<Map<Long, Integer>> response =
                 restTemplate.exchange(
@@ -39,7 +39,7 @@ public class SeatInventoryClient {
 
     public void createSeats(SeatSetupRequest request) {
         restTemplate.postForObject(
-                "http://localhost:8082/seats/setup",
+                "http://localhost:8084/seats/setup",
                 request,
                 String.class
         );

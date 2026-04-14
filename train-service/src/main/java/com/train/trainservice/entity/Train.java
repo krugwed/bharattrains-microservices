@@ -13,7 +13,8 @@ import java.util.Set;
 public class Train {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "train_seq_gen")
+    @SequenceGenerator(name = "train_seq_gen", sequenceName = "train_seq", allocationSize = 1)
     private Long trainId;
 
     private String trainName;

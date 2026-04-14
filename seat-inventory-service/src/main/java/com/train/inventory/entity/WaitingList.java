@@ -8,7 +8,8 @@ import lombok.Data;
 public class WaitingList {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "waiting_list_seq_gen")
+    @SequenceGenerator(name = "waiting_list_seq_gen", sequenceName = "waiting_list_seq", allocationSize = 1)
     private Long id;
 
     private Long trainId;

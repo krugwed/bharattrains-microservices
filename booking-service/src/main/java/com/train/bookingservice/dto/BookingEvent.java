@@ -1,12 +1,13 @@
-package com.train.paymentservice.dto;
+package com.train.bookingservice.dto;
 
 import lombok.Data;
 
 @Data
-public class NotificationRequest {
+public class BookingEvent {
 
     private Long bookingId;
     private String message;
-    private String type;
     private String email;
+    private String type;
+
 }

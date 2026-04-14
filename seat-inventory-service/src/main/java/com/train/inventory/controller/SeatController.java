@@ -1,7 +1,7 @@
 package com.train.inventory.controller;
 
 import com.train.inventory.dto.*;
-import com.train.inventory.entity.AvailabilityRequest;
+import com.train.inventory.dto.AvailabilityRequest;
 import com.train.inventory.service.SeatAllocationService;
 import org.springframework.web.bind.annotation.*;
 

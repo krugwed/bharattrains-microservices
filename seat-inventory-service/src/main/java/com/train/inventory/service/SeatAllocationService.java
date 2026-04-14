@@ -1,5 +1,6 @@
 package com.train.inventory.service;
 
+import com.train.inventory.dto.AvailabilityRequest;
 import com.train.inventory.dto.SeatDetails;
 import com.train.inventory.dto.SeatSetupRequest;
 import com.train.inventory.entity.*;

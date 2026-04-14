@@ -1,4 +1,4 @@
-package com.train.inventory.entity;
+package com.train.inventory.dto;
 
 import lombok.Data;
 

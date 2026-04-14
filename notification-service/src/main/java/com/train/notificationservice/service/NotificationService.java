@@ -23,10 +23,6 @@ public class NotificationService {
 
     public String sendNotification(NotificationRequest request) {
 
-        if ("EMAIL".equalsIgnoreCase(request.getType())) {
-            sendEmail(request);
-        }
-
         Notification notification = new Notification();
         notification.setBookingId(request.getBookingId());
         notification.setMessage(request.getMessage());
@@ -35,6 +31,7 @@ public class NotificationService {
         notification.setCreatedAt(LocalDateTime.now());
 
         notificationRepository.save(notification);
+        sendEmail(request);
 
         return "Notification sent successfully";
     }

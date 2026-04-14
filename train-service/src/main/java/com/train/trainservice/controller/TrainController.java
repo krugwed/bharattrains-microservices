@@ -16,7 +16,7 @@ public class TrainController {
     @Autowired
     private TrainService trainService;
 
-    @PostMapping("/full")
+    @PostMapping("/createTrain")
     public String createTrainWithRoutes(@RequestBody CreateTrainRequest request) {
         trainService.createTrainWithRoutes(request);
         return "Train, stations and routes created successfully";

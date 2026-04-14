@@ -11,7 +11,7 @@ import com.train.bookingservice.repository.BookingRepository;
 import com.train.bookingservice.repository.PassengerRepository;
 
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.annotation.Transactional;import tools.jackson.databind.ObjectMapper;
 
 import java.util.List;
 
@@ -24,6 +24,7 @@ public class BookingService {
     private final NotificationClient notificationClient;
     private final UserClient userClient;
     private final TrainClient trainClient;
+    private final KafkaProducerService kafkaProducerService;
 
     public BookingService(
             BookingRepository bookingRepository,
@@ -31,13 +32,14 @@ public class BookingService {
             SeatInventoryClient seatClient,
             NotificationClient notificationClient,
             UserClient userClient,
-            TrainClient trainClient) {
+            TrainClient trainClient, KafkaProducerService kafkaProducerService) {
         this.bookingRepository = bookingRepository;
         this.passengerRepository = passengerRepository;
         this.seatClient = seatClient;
         this.notificationClient = notificationClient;
         this.userClient = userClient;
         this.trainClient = trainClient;
+        this.kafkaProducerService = kafkaProducerService;
     }
 
     public Booking createBooking(BookingRequestDTO request) {
@@ -104,13 +106,25 @@ public class BookingService {
         bookingRepository.save(booking);
 
         // SEND NOTIFICATION
-        notificationClient.sendNotification(
-                booking.getBookingId(),
-                "Booking created successfully. PNR: " + booking.getPnr()
-                        + " | Total Fare: " + totalFare,
-                email,
-                "BOOKING_CREATED"
+        BookingEvent event = new BookingEvent();
+        event.setBookingId(booking.getBookingId());
+        event.setMessage("Booking created successfully. PNR: " + booking.getPnr()
+                + " | Total Fare: " + totalFare);
+        event.setEmail(email);
+        event.setType("BOOKING_CREATED");
+
+        kafkaProducerService.sendMessage(
+                "booking-topic",
+                new ObjectMapper().writeValueAsString(event)
         );
+
+//        notificationClient.sendNotification(
+//                booking.getBookingId(),
+//                "Booking created successfully. PNR: " + booking.getPnr()
+//                        + " | Total Fare: " + totalFare,
+//                email,
+//                "BOOKING_CREATED"
+//        );
 
         return booking;
     }
@@ -202,13 +216,24 @@ public class BookingService {
         // Fetch email from User Service
         String email = userClient.getUserEmailByBookingId(booking.getBookingId());
 
-        // 🔔 SEND NOTIFICATION
-        notificationClient.sendNotification(
-                booking.getBookingId(),
-                "Your booking with PNR " + booking.getPnr() + " has been cancelled.",
-                email,
-                "BOOKING_CANCELLED"
+        //  SEND NOTIFICATION
+        BookingEvent event = new BookingEvent();
+        event.setBookingId(booking.getBookingId());
+        event.setMessage("Your booking with PNR " + booking.getPnr() + " has been cancelled.");
+        event.setEmail(email);
+        event.setType("BOOKING_CANCELLED");
+
+        kafkaProducerService.sendMessage(
+                "booking-topic",
+                new ObjectMapper().writeValueAsString(event)
         );
+
+//        notificationClient.sendNotification(
+//                booking.getBookingId(),
+//                "Your booking with PNR " + booking.getPnr() + " has been cancelled.",
+//                email,
+//                "BOOKING_CANCELLED"
+//        );
 
         return "Booking cancelled successfully";
     }
@@ -243,13 +268,24 @@ public class BookingService {
         // Fetch email
         String email = userClient.getUserEmailByBookingId(booking.getBookingId());
 
-        // 🔔 SEND NOTIFICATION
-        notificationClient.sendNotification(
-                booking.getBookingId(),
-                "Passenger " + passenger.getName() + " has been cancelled from booking PNR: " + booking.getPnr(),
-                email,
-                "PASSENGER_CANCELLED"
+        // SEND NOTIFICATION
+        BookingEvent event = new BookingEvent();
+        event.setBookingId(booking.getBookingId());
+        event.setMessage("Your booking with PNR " + booking.getPnr() + " has been cancelled.");
+        event.setEmail(email);
+        event.setType("PASSENGER_CANCELLED");
+
+        kafkaProducerService.sendMessage(
+                "booking-topic",
+                new ObjectMapper().writeValueAsString(event)
         );
+
+//        notificationClient.sendNotification(
+//                booking.getBookingId(),
+//                "Passenger " + passenger.getName() + " has been cancelled from booking PNR: " + booking.getPnr(),
+//                email,
+//                "PASSENGER_CANCELLED"
+//        );
 
         return "Passenger cancelled successfully";
     }

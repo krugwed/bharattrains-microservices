@@ -11,7 +11,8 @@ import java.time.LocalTime;
 public class TrainRoute {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "train_route_seq_gen")
+    @SequenceGenerator(name = "train_route_seq_gen", sequenceName = "train_route_seq", allocationSize = 1)
     private Long id;
 
     private Long trainId;

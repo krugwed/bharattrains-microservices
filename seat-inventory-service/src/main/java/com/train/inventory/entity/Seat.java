@@ -9,7 +9,8 @@ import lombok.Data;
 public class Seat {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "seat_seq_gen")
+    @SequenceGenerator(name = "seat_seq_gen", sequenceName = "seat_seq", allocationSize = 1)
     private Long seatId;
 
     @Column(nullable = false)
